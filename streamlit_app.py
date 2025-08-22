@@ -48,15 +48,21 @@ filter_calligrapher_list = [c.strip() for c in filter_calligrapher_input.split("
 download_limit = 4
 placeholder_img_path = os.path.join(os.getcwd(), "查無此字.png")  # 同資料夾下
 
-# ====== 預先下載圖片函數 ======
+# ====== 預先下載圖片函數 (自動轉 RGB) ======
 def preload_images(url_list):
     for url in url_list:
         if url not in st.session_state.image_cache:
             try:
                 response = requests.get(url, timeout=5)
-                st.session_state.image_cache[url] = Image.open(BytesIO(response.content))
+                img = Image.open(BytesIO(response.content))
+                if img.mode != "RGB":
+                    img = img.convert("RGB")  # 🔹 轉成 RGB 避免 RGBA 問題
+                st.session_state.image_cache[url] = img
             except:
-                st.session_state.image_cache[url] = Image.open(placeholder_img_path)
+                placeholder_img = Image.open(placeholder_img_path)
+                if placeholder_img.mode != "RGB":
+                    placeholder_img = placeholder_img.convert("RGB")
+                st.session_state.image_cache[url] = placeholder_img
 
 # ====== 搜尋按鈕 ======
 if st.button("開始搜尋"):
@@ -172,8 +178,10 @@ if results:
         end = min(start + download_limit, len(group_items))
         batch_items = group_items[start:end]
 
-        img_objects = [st.session_state.image_cache.get(img_url, Image.open(placeholder_img_path)) 
-                       for _, _, img_url in batch_items]
+        img_objects = [
+            st.session_state.image_cache.get(url, Image.open(placeholder_img_path).convert("RGB"))
+            for _, _, url in batch_items
+        ]
         labels = [f"{convert(author, 'zh-tw')}" for _, author, _ in batch_items]
 
         selected_idx = image_select(
@@ -195,6 +203,7 @@ if results:
             if st.button(f"下一批 {w}", key=next_batch_key):
                 st.session_state.display_index[w] = start + download_limit
                 st.session_state.selected_images = [x for x in st.session_state.selected_images if x[1] != w]
+
 
 if st.session_state.selected_images:
     st.subheader("✅ 你挑選的圖片（列水平排列，列內直向堆疊）")
