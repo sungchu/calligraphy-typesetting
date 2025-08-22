@@ -11,7 +11,7 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.core.os_manager import ChromeType
+#from webdriver_manager.core.os_manager import ChromeType
 from collections import defaultdict
 from zhconv import convert
 
@@ -60,7 +60,7 @@ if st.button("開始搜尋"):
 
     search_words = list(search_input_chinese.strip())
     results = []
-    progress_bar = st.progress(0, text = '搜尋中，請稍等')
+    progress_bar = st.progress(0)
     status_text = st.empty()
     total_words = len(search_words)
 
@@ -69,8 +69,8 @@ if st.button("開始搜尋"):
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--headless")
-    options.add_argument("--incognito")
-    options.add_argument("--disable-dev-shm-usage")  # container safe
+    #options.add_argument("--incognito")
+    #options.add_argument("--disable-dev-shm-usage")  # container safe
     #options.binary_location = "/usr/bin/chromium-browser"
     # 嘗試自動下載 driver，失敗則 fallback 本地
     #try:
