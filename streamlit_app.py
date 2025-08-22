@@ -13,20 +13,14 @@ from webdriver_manager.core.os_manager import ChromeType
 from collections import defaultdict
 import os
 from zhconv import convert
-import requests
-from io import BytesIO
-from PIL import Image
-import threading
 
-# ====== 初始化 session_state ======
+# ========== 初始化 session_state ==========
 if "results" not in st.session_state:
     st.session_state.results = []
 if "selected_images" not in st.session_state:
     st.session_state.selected_images = []
 if "display_index" not in st.session_state:
     st.session_state.display_index = {}
-if "image_cache" not in st.session_state:
-    st.session_state.image_cache = {}
 
 st.title("書法字典圖片瀏覽器")
 
@@ -42,29 +36,15 @@ style_value = st.selectbox("選擇書法字體",
 filter_calligrapher_input = st.text_input(
     "指定特定書法家（若有多位，請用、分隔，留空則代表不指定）", ""
 )
-filter_calligrapher_list = [c.strip() for c in filter_calligrapher_input.split("、") if c.strip()] \
-    if filter_calligrapher_input.strip() else None
+if filter_calligrapher_input.strip():
+    filter_calligrapher_list = [c.strip() for c in filter_calligrapher_input.split("、") if c.strip()]
+else:
+    filter_calligrapher_list = None
 
 download_limit = 4
 placeholder_img_path = os.path.join(os.getcwd(), "查無此字.png")  # 同資料夾下
 
-# ====== 預先下載圖片函數 (自動轉 RGB) ======
-def preload_images(url_list):
-    for url in url_list:
-        if url not in st.session_state.image_cache:
-            try:
-                response = requests.get(url, timeout=5)
-                img = Image.open(BytesIO(response.content))
-                if img.mode != "RGB":
-                    img = img.convert("RGB")  # 🔹 轉成 RGB 避免 RGBA 問題
-                st.session_state.image_cache[url] = img
-            except:
-                placeholder_img = Image.open(placeholder_img_path)
-                if placeholder_img.mode != "RGB":
-                    placeholder_img = placeholder_img.convert("RGB")
-                st.session_state.image_cache[url] = placeholder_img
-
-# ====== 搜尋按鈕 ======
+# ========== 搜尋按鈕 ==========
 if st.button("開始搜尋"):
     st.session_state.results = []
     st.session_state.selected_images = []
@@ -72,21 +52,22 @@ if st.button("開始搜尋"):
 
     search_words = list(search_input_chinese.strip())
     results = []
-    progress_bar = st.progress(0, text='搜尋中，請稍後')
+    progress_bar = st.progress(0, text = '搜尋中，請稍後')
     status_text = st.empty()
     total_words = len(search_words)
 
-    # Selenium 設定
+    # ========== Selenium 設定 ==========
     options = Options()
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--incognito")
-    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-dev-shm-usage")  # container safe
     service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
-    driver = None
+    driver = webdriver.Chrome(service=service, options=options)
 
-    try:
+    driver = None
+    try:  # #️⃣ 使用 try/finally 確保 driver 會被關閉
         driver = webdriver.Chrome(service=service, options=options)
         base_url = "https://www.shufazidian.com/s.php"
 
@@ -95,9 +76,15 @@ if st.button("開始搜尋"):
                 driver.get(base_url)
                 time.sleep(random.uniform(1, 2))
 
-                driver.find_element(By.ID, "wd").send_keys(word)
-                Select(driver.find_element(By.ID, "sort")).select_by_value(style_value)
-                driver.find_element(By.XPATH, "//form[@name='form1']//button[@type='submit']").click()
+                search_input_elem = driver.find_element(By.ID, "wd")
+                search_input_elem.clear()
+                search_input_elem.send_keys(word)
+
+                select = Select(driver.find_element(By.ID, "sort"))
+                select.select_by_value(style_value)
+
+                submit_button = driver.find_element(By.XPATH, "//form[@name='form1']//button[@type='submit']")
+                submit_button.click()
                 time.sleep(random.uniform(2, 3))
 
                 progress_bar.progress((idx + 1) / total_words)
@@ -122,32 +109,32 @@ if st.button("開始搜尋"):
                     except:
                         author_name = g_div.text.split('\n')[0].strip()
 
-                    if filter_calligrapher_list and (convert(author_name, 'zh-tw') not in filter_calligrapher_list):
+                    if filter_calligrapher_list and (convert(author_name,'zh-tw') not in filter_calligrapher_list):
                         continue
 
                     results.append((word, author_name, img_url))
                     word_found = True
 
+                # 如果沒找到，就加 placeholder
                 if not word_found:
                     results.append((word, "查無此字", placeholder_img_path))
 
             except Exception as e:
+                # #️⃣ 單個字出錯時，也不影響整體流程
                 results.append((word, "查無此字", placeholder_img_path))
                 st.warning(f"{word} 搜尋失敗: {e}")
 
     finally:
         if driver:
-            driver.quit()
+            driver.quit()  # #️⃣ 確保 driver 一定關閉
 
     st.session_state.results = results
+
+    # 初始化 display_index
     for word in search_words:
         st.session_state.display_index[word] = 0
 
-    # 背景預載所有圖片
-    all_urls = [img_url for _, _, img_url in results]
-    threading.Thread(target=preload_images, args=(all_urls,), daemon=True).start()
-
-# ====== 顯示結果 & 收藏邏輯 ======
+# ========== 顯示搜尋結果 & 收藏圖片邏輯 ==========
 results = st.session_state.get("results", [])
 if results:
     search_words = list(search_input_chinese.strip())
@@ -178,15 +165,12 @@ if results:
         end = min(start + download_limit, len(group_items))
         batch_items = group_items[start:end]
 
-        img_objects = [
-            st.session_state.image_cache.get(url, Image.open(placeholder_img_path).convert("RGB"))
-            for _, _, url in batch_items
-        ]
+        img_urls = [img_url for _, _, img_url in batch_items]
         labels = [f"{convert(author, 'zh-tw')}" for _, author, _ in batch_items]
 
         selected_idx = image_select(
             label=f"選擇 {w} 的圖片",
-            images=img_objects,
+            images=img_urls,
             captions=labels,
             return_value="index",
             key=f"img_select_{w_idx}_{start}",
@@ -203,7 +187,6 @@ if results:
             if st.button(f"下一批 {w}", key=next_batch_key):
                 st.session_state.display_index[w] = start + download_limit
                 st.session_state.selected_images = [x for x in st.session_state.selected_images if x[1] != w]
-
 
 if st.session_state.selected_images:
     st.subheader("✅ 你挑選的圖片（列水平排列，列內直向堆疊）")
