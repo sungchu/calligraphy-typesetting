@@ -1,14 +1,19 @@
+import re
+import time
+import stat
+import random
 import streamlit as st
+from streamlit_image_select import image_select
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from collections import defaultdict
+import os
+from zhconv import convert
 
-"""
-## Web scraping on Streamlit Cloud with Selenium
-
-[![Source](https://img.shields.io/badge/View-Source-<COLOR>.svg)](https://github.com/snehankekre/streamlit-selenium-chrome/)
-
-This is a minimal, reproducible example of how to scrape the web with Selenium and Chrome on Streamlit's Community Cloud.
-
-Fork this repo, and edit `/streamlit_app.py` to customize this app to your heart's desire. :heart:
-"""
 
 with st.echo():
     from selenium import webdriver
@@ -31,6 +36,6 @@ with st.echo():
     options.add_argument("--headless")
 
     driver = get_driver()
-    driver.get("http://example.com")
+    driver.get("https://www.shufazidian.com/s.php")
 
     st.code(driver.page_source)
