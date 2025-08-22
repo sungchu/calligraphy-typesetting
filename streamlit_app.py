@@ -71,7 +71,7 @@ if st.button("開始搜尋"):
     options.add_argument("--headless")
     options.add_argument("--incognito")
     options.add_argument("--disable-dev-shm-usage")  # container safe
-    options.binary_location = "/usr/bin/chromium-browser"
+    #options.binary_location = "/usr/bin/chromium-browser"
     # 嘗試自動下載 driver，失敗則 fallback 本地
     #try:
     service = Service(ChromeDriverManager().install())
