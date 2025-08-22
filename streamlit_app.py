@@ -74,7 +74,7 @@ if st.button("開始搜尋"):
     #options.binary_location = "/usr/bin/chromium-browser"
     # 嘗試自動下載 driver，失敗則 fallback 本地
     #try:
-    service = Service(ChromeDriverManager().install())
+    #service = Service(ChromeDriverManager().install())
     
     driver = get_driver()
     base_url = "https://www.shufazidian.com/s.php"
