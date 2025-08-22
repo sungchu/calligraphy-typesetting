@@ -65,7 +65,7 @@ with st.echo():
         options.add_argument("--disable-dev-shm-usage")  # container safe
         #options.binary_location = "/usr/bin/chromium-browser"
 
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager(version="120.0.6099.224").install()), options=options)
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install()), options=options)
 
         driver = None
         try:  # #️⃣ 使用 try/finally 確保 driver 會被關閉
