@@ -60,7 +60,7 @@ if st.button("開始搜尋"):
 
     search_words = list(search_input_chinese.strip())
     results = []
-    progress_bar = st.progress(0)
+    progress_bar = st.progress(0, text = '搜尋中，請稍等')
     status_text = st.empty()
     total_words = len(search_words)
 
