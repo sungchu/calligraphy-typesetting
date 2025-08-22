@@ -63,9 +63,9 @@ with st.echo():
         options.add_argument("--no-sandbox")
         options.add_argument("--incognito")
         options.add_argument("--disable-dev-shm-usage")  # container safe
-        options.binary_location = "/usr/bin/chromium-browser"
+        #options.binary_location = "/usr/bin/chromium-browser"
 
-        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
         driver = None
         try:  # #️⃣ 使用 try/finally 確保 driver 會被關閉
