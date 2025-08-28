@@ -87,30 +87,8 @@ if st.button("開始搜尋"):
                 submit_button.click()
                 time.sleep(random.uniform(2, 3))
 
-                # 初始化計時
-                start_time = time.time()
-
-                for idx, word in enumerate(search_words):
-                    driver.get(base_url)
-                    time.sleep(random.uniform(1, 2))
-                    ...
-                    submit_button.click()
-                    time.sleep(random.uniform(2, 3))
-
-                    # 已完成數量
-                    completed = idx + 1
-                    elapsed = time.time() - start_time
-                    avg_time = elapsed / completed
-                    remaining = (total_words - completed) * avg_time
-
-                    # 轉換時間格式
-                    remain_min = int(remaining // 60)
-                    remain_sec = int(remaining % 60)
-
-                    progress_bar.progress(completed / total_words)
-                    status_text.text(
-                        f"正在搜尋第 {completed}/{total_words} 個字：{word} ⏳ 預估剩餘 {remain_min}分{remain_sec}秒"
-                    )
+                progress_bar.progress((idx + 1) / total_words)
+                status_text.text(f"正在搜尋第 {idx + 1}/{total_words} 個字：{word}")
 
                 j_elements = driver.find_elements(By.CSS_SELECTOR, "div.j")
                 if not filter_calligrapher_list:
