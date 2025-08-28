@@ -137,6 +137,7 @@ if st.button("開始搜尋"):
             if driver:
                 driver.quit()
 
+        # 如果整體沒有任何圖片，給 placeholder
         has_any_image = any(img_url for _, _, img_url in results)
         if not has_any_image:
             results = [(word, "查無此字", placeholder_img_path) for word in search_words]
@@ -183,8 +184,9 @@ if results:
         end = min(start + download_limit, len(group_items))
         batch_items = group_items[start:end]
 
-        img_urls = [img_url for _, _, img_url in batch_items if img_url is not None]
-        labels = [f"{convert(author,'zh-tw')}" for _, author, img_url in batch_items if img_url is not None]
+        # 確保每個 batch 至少有一張圖片
+        img_urls = [img_url if img_url else placeholder_img_path for _, _, img_url in batch_items]
+        labels = [convert(author,'zh-tw') if img_url else "查無此字" for _, author, img_url in batch_items]
 
         selected_idx = image_select(
             label=f"選擇 {w} 的圖片",
