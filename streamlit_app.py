@@ -147,8 +147,12 @@ if st.button("開始搜尋"):
         st.session_state.results = results
 
         # 初始化 display_index
+        # 使用字+出現次數作為 key
+        word_count = defaultdict(int)
         for word in search_words:
-            st.session_state.display_index[word] = 0
+            word_count[word] += 1
+            instance_id = word_count[word]
+            st.session_state.display_index[f"{word}_{instance_id}"] = 0
 
 # ================= 顯示搜尋結果 & 下一批圖片功能 =================
 results = st.session_state.get("results", [])
@@ -170,37 +174,44 @@ if results:
         unsafe_allow_html=True
     )
 
+    # 記錄每個字出現的次數
+    word_count = defaultdict(int)
+
     for w_idx, w in enumerate(search_words):
+        word_count[w] += 1
+        instance_id = word_count[w]  # 這個字第幾次出現
         group_items = groups_dict.get(w, [])
         if not group_items:
             continue
 
         st.subheader(f"🔍 {w} ({style_dict[style_value]})")
 
-        start = st.session_state.display_index.get(w, 0)
+        start = st.session_state.display_index.get(f"{w}_{instance_id}", 0)
         end = min(start + download_limit, len(group_items))
         batch_items = group_items[start:end]
 
         img_urls = [img_url for _, _, img_url in batch_items if img_url is not None]
-        labels = [f"{convert(author, 'zh-tw')}" for _, author, img_url in batch_items if img_url is not None]
+        labels = [f"{convert(author,'zh-tw')}" for _, author, img_url in batch_items if img_url is not None]
 
         selected_idx = image_select(
             label=f"選擇 {w} 的圖片",
             images=img_urls,
             captions=labels,
             return_value="index",
-            key=f"img_select_{w_idx}_{start}"
+            key=f"img_select_{w}_{instance_id}_{start}"
         )
 
-        st.session_state.selected_images = [x for x in st.session_state.selected_images if x[1] != w]
+        st.session_state.selected_images = [
+            x for x in st.session_state.selected_images if x[1] != f"{w}_{instance_id}"
+        ]
         if selected_idx is not None:
-            word, author_name, img_url = batch_items[selected_idx]
-            st.session_state.selected_images.append((w_idx, word, author_name, img_url))
+            word_sel, author_name, img_url = batch_items[selected_idx]
+            st.session_state.selected_images.append((w_idx, f"{w}_{instance_id}", author_name, img_url))
 
-        # 下一批按鈕（高效，不卡住）
+        # 下一批按鈕
         if end < len(group_items):
-            if st.button(f"下一批 {w}", key=f"next_batch_{w_idx}_{w}"):
-                st.session_state.display_index[w] = start + download_limit
+            if st.button(f"下一批 {w}", key=f"next_batch_{w}_{instance_id}"):
+                st.session_state.display_index[f"{w}_{instance_id}"] = start + download_limit
 
 # ================= 顯示挑選圖片 =================
 if st.session_state.selected_images:
