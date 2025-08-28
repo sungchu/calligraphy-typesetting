@@ -180,43 +180,36 @@ if results:
             continue
 
         st.subheader(f"🔍 {w} ({style_dict[style_value]})")
-
-        # 讀取 display_index，若無則初始化
-        idx_key = f"{w}_{instance_id}"
-        start = st.session_state.display_index.get(idx_key, 0)
+        start = st.session_state.display_index.get(f"{w}_{instance_id}", 0)
         end = min(start + download_limit, len(group_items))
         batch_items = group_items[start:end]
 
-        # 確保每個 batch 至少一張圖片
+        # 確保每個 batch 至少有一張圖片
         img_urls = [img_url if img_url else placeholder_img_path for _, _, img_url in batch_items]
         labels = [convert(author,'zh-tw') if img_url else "查無此字" for _, author, img_url in batch_items]
-
-        # widget key 與 batch start 綁定，保證下一批會刷新
-        widget_key = f"img_select_{w}_{instance_id}_{start}"
 
         selected_idx = image_select(
             label=f"選擇 {w} 的圖片",
             images=img_urls,
             captions=labels,
             return_value="index",
-            key=widget_key
+            key=f"img_select_{w}_{instance_id}_{start}"
         )
 
         # 限制每組只能選一張圖片
         st.session_state.selected_images = [
-            x for x in st.session_state.selected_images if x[1] != idx_key
+            x for x in st.session_state.selected_images if x[1] != f"{w}_{instance_id}"
         ]
         if selected_idx is not None:
             word_sel, author_name, img_url = batch_items[selected_idx]
-            st.session_state.selected_images.append((w_idx, idx_key, author_name, img_url))
+            st.session_state.selected_images.append((w_idx, f"{w}_{instance_id}", author_name, img_url))
 
         # 下一批按鈕
         if end < len(group_items):
-            if st.button(f"下一批 {w}", key=f"next_batch_{w}_{instance_id}"):
-                # 更新 start index
+            next_key = f"next_batch_{w}_{instance_id}"
+            if st.button(f"下一批 {w}", key=next_key):
+                # 更新 display_index，下一次 rerun 自動生效
                 st.session_state.display_index[idx_key] = start + download_limit
-                # 強制刷新 rerun，下一批立即渲染
-                st.experimental_rerun()
 
 # ================= 顯示挑選圖片 =================
 if st.session_state.selected_images:
