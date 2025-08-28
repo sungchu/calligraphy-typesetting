@@ -24,7 +24,7 @@ if "display_index" not in st.session_state:
 
 st.title("書法字典圖片瀏覽器")
 
-search_input = st.text_input("輸入要搜尋的文字（可多個字，無空格）")
+search_input = st.text_input("請輸入要搜尋的文字（標點符號將自動忽略，建議長度不超過30字）")
 search_input_chinese = "".join(re.findall(r"[\u4e00-\u9fff]+", search_input))
 style_dict = {"1": "章草", "3": "篆書", "4": "簡牘", "5": "魏碑",
               "6": "隸書", "7": "草書", "8": "行書", "9": "楷書"}
@@ -34,7 +34,7 @@ style_value = st.selectbox("選擇書法字體",
                            index=7)
 
 filter_calligrapher_input = st.text_input(
-    "指定特定書法家（若有多位，請用、分隔，留空則代表不指定）", ""
+    "請輸入欲指定的書法家名稱，若要指定多位，請以「、」分隔。若不指定，則留空即可。（範例：王羲之、顏真卿、歐陽詢）", ""
 )
 if filter_calligrapher_input.strip():
     filter_calligrapher_list = [c.strip() for c in filter_calligrapher_input.split("、") if c.strip()]
@@ -134,13 +134,24 @@ if st.button("開始搜尋"):
     for word in search_words:
         st.session_state.display_index[word] = 0
 
-# ========== 顯示搜尋結果 & 收藏圖片邏輯 ==========
+# ========== 顯示搜尋結果 & 收藏圖片邏輯（優化版） ==========
 results = st.session_state.get("results", [])
 if results:
     search_words = list(search_input_chinese.strip())
     groups_dict = defaultdict(list)
     for word, author, img_url in results:
         groups_dict[word].append((word, author, img_url))
+
+    # 預先將每個字的圖片分批
+    if "batches" not in st.session_state:
+        st.session_state.batches = {}
+        st.session_state.display_index = {}
+        for w in search_words:
+            items = groups_dict.get(w, [])
+            st.session_state.batches[w] = [
+                items[i:i+download_limit] for i in range(0, len(items), download_limit)
+            ]
+            st.session_state.display_index[w] = 0
 
     st.markdown(
         """
@@ -155,39 +166,46 @@ if results:
     )
 
     for w_idx, w in enumerate(search_words):
-        group_items = groups_dict.get(w, [])
-        if not group_items:
+        batches = st.session_state.batches.get(w, [])
+        if not batches:
             continue
+
+        batch_idx = st.session_state.display_index[w]
+        if batch_idx >= len(batches):
+            batch_idx = len(batches) - 1
+        batch_items = batches[batch_idx]
 
         st.subheader(f"🔍 {w} ({style_dict[style_value]})")
 
-        start = st.session_state.display_index.get(w, 0)
-        end = min(start + download_limit, len(group_items))
-        batch_items = group_items[start:end]
-
         img_urls = [img_url for _, _, img_url in batch_items]
-        labels = [f"{convert(author, 'zh-tw')}" for _, author, _ in batch_items]
+        labels = [convert(author, 'zh-tw') for _, author, _ in batch_items]
 
+        # 每批固定 key
         selected_idx = image_select(
             label=f"選擇 {w} 的圖片",
             images=img_urls,
             captions=labels,
             return_value="index",
-            key=f"img_select_{w_idx}_{start}",
+            key=f"img_select_{w_idx}_{batch_idx}",
             use_container_width=False,
         )
 
-        st.session_state.selected_images = [x for x in st.session_state.selected_images if x[1] != w]
         if selected_idx is not None:
             word, author_name, img_url = batch_items[selected_idx]
+            # 保留已選圖片，不清掉其他批次
+            st.session_state.selected_images = [
+                x for x in st.session_state.selected_images if not (x[1] == w and x[2] == author_name)
+            ]
             st.session_state.selected_images.append((w_idx, word, author_name, img_url))
 
-        next_batch_key = f"next_batch_{w_idx}_{w}"
-        if end < len(group_items):
-            if st.button(f"下一批 {w}", key=next_batch_key):
-                st.session_state.display_index[w] = start + download_limit
-                st.session_state.selected_images = [x for x in st.session_state.selected_images if x[1] != w]
+        # 下一批按鈕
+        if batch_idx + 1 < len(batches):
+            if st.button(f"下一批 {w}", key=f"next_batch_{w_idx}_{batch_idx}"):
+                st.session_state.display_index[w] += 1
+                # 避免清掉已選圖片
+                st.experimental_rerun()
 
+# ========== 顯示已選圖片 ==========
 if st.session_state.selected_images:
     st.subheader("✅ 你挑選的圖片（列水平排列，列內直向堆疊）")
     sorted_selected = sorted(st.session_state.selected_images, key=lambda x: x[0])
