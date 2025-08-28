@@ -14,7 +14,7 @@ from collections import defaultdict
 import os
 from zhconv import convert
 
-# ========== 初始化 session_state ==========
+# ================= 初始化 session_state =================
 if "results" not in st.session_state:
     st.session_state.results = []
 if "selected_images" not in st.session_state:
@@ -22,9 +22,9 @@ if "selected_images" not in st.session_state:
 if "display_index" not in st.session_state:
     st.session_state.display_index = {}
 
-st.title("書法字典圖瀏覽器")
+st.title("書法字典圖片瀏覽器")
 
-search_input = st.text_input("請輸入要搜尋的文字（標點符號將自動忽略，建議長度不超過30字）")
+search_input = st.text_input("輸入要搜尋的文字（可多個字，無空格）")
 search_input_chinese = "".join(re.findall(r"[\u4e00-\u9fff]+", search_input))
 style_dict = {"1": "章草", "3": "篆書", "4": "簡牘", "5": "魏碑",
               "6": "隸書", "7": "草書", "8": "行書", "9": "楷書"}
@@ -34,7 +34,7 @@ style_value = st.selectbox("選擇書法字體",
                            index=7)
 
 filter_calligrapher_input = st.text_input(
-    "請輸入欲指定的書法家名稱，若要指定多位，請以「、」分隔。若不指定，則留空即可。（範例：王羲之、顏真卿、歐陽詢）", ""
+    "指定特定書法家（若有多位，請用、分隔，留空則代表不指定）", ""
 )
 if filter_calligrapher_input.strip():
     filter_calligrapher_list = [c.strip() for c in filter_calligrapher_input.split("、") if c.strip()]
@@ -44,7 +44,7 @@ else:
 download_limit = 4
 placeholder_img_path = os.path.join(os.getcwd(), "查無此字.png")  # 同資料夾下
 
-# ========== 搜尋按鈕 ==========
+# ================= 搜尋按鈕 =================
 if st.button("開始搜尋"):
     st.session_state.results = []
     st.session_state.selected_images = []
@@ -52,106 +52,111 @@ if st.button("開始搜尋"):
 
     search_words = list(search_input_chinese.strip())
     results = []
-    progress_bar = st.progress(0, text = '搜尋中，請稍後')
-    status_text = st.empty()
     total_words = len(search_words)
+    progress_bar = st.progress(0, text='搜尋中，請稍後')
+    status_text = st.empty()
 
-    # ========== Selenium 設定 ==========
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--incognito")
-    options.add_argument("--disable-dev-shm-usage")  # container safe
-    service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
-    driver = webdriver.Chrome(service=service, options=options)
+    # Spinner 轉圈圈
+    with st.spinner("🔄 搜尋中，請稍後..."):
+        # ================= Selenium 設定 =================
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--incognito")
+        options.add_argument("--disable-dev-shm-usage")
+        service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
 
-    driver = None
-    try:  # #️⃣ 使用 try/finally 確保 driver 會被關閉
-        driver = webdriver.Chrome(service=service, options=options)
-        base_url = "https://www.shufazidian.com/s.php"
+        driver = None
+        try:
+            driver = webdriver.Chrome(service=service, options=options)
+            base_url = "https://www.shufazidian.com/s.php"
+            start_time = time.time()
 
-        for idx, word in enumerate(search_words):
-            try:
-                driver.get(base_url)
-                time.sleep(random.uniform(1, 2))
-
-                search_input_elem = driver.find_element(By.ID, "wd")
-                search_input_elem.clear()
-                search_input_elem.send_keys(word)
-
-                select = Select(driver.find_element(By.ID, "sort"))
-                select.select_by_value(style_value)
-
-                submit_button = driver.find_element(By.XPATH, "//form[@name='form1']//button[@type='submit']")
-                submit_button.click()
-                time.sleep(random.uniform(2, 3))
-
-                progress_bar.progress((idx + 1) / total_words)
-                status_text.text(f"正在搜尋第 {idx + 1}/{total_words} 個字：{word}")
-
-                j_elements = driver.find_elements(By.CSS_SELECTOR, "div.j")
-                if not filter_calligrapher_list:
-                    j_elements = j_elements[1:]
-
+            for idx, word in enumerate(search_words):
                 word_found = False
-                for j in j_elements[:-1]:
-                    try:
-                        a_img = j.find_element(By.CSS_SELECTOR, "div.mbpho a")
-                        img_url = a_img.get_attribute("href")
-                    except:
-                        continue
+                try:
+                    driver.get(base_url)
+                    time.sleep(random.uniform(1, 2))
 
-                    try:
-                        g_div = j.find_element(By.CSS_SELECTOR, "div.g")
-                        a_btnsfj = g_div.find_element(By.CSS_SELECTOR, "a.btnSFJ")
-                        author_name = a_btnsfj.get_attribute("sfj") or a_btnsfj.text.strip()
-                    except:
-                        author_name = g_div.text.split('\n')[0].strip()
+                    search_input_elem = driver.find_element(By.ID, "wd")
+                    search_input_elem.clear()
+                    search_input_elem.send_keys(word)
 
-                    if filter_calligrapher_list and (convert(author_name,'zh-tw') not in filter_calligrapher_list):
-                        continue
+                    select = Select(driver.find_element(By.ID, "sort"))
+                    select.select_by_value(style_value)
 
-                    results.append((word, author_name, img_url))
-                    word_found = True
+                    submit_button = driver.find_element(By.XPATH, "//form[@name='form1']//button[@type='submit']")
+                    submit_button.click()
+                    time.sleep(random.uniform(2, 3))
 
-                # 如果沒找到，就加 placeholder
-                if not word_found:
-                    results.append((word, "查無此字", placeholder_img_path))
+                    j_elements = driver.find_elements(By.CSS_SELECTOR, "div.j")
+                    if not filter_calligrapher_list:
+                        j_elements = j_elements[1:]
 
-            except Exception as e:
-                # #️⃣ 單個字出錯時，也不影響整體流程
-                results.append((word, "查無此字", placeholder_img_path))
-                st.warning(f"{word} 搜尋失敗: {e}")
+                    for j in j_elements[:-1]:
+                        try:
+                            a_img = j.find_element(By.CSS_SELECTOR, "div.mbpho a")
+                            img_url = a_img.get_attribute("href")
+                        except:
+                            continue
 
-    finally:
-        if driver:
-            driver.quit()  # #️⃣ 確保 driver 一定關閉
+                        try:
+                            g_div = j.find_element(By.CSS_SELECTOR, "div.g")
+                            a_btnsfj = g_div.find_element(By.CSS_SELECTOR, "a.btnSFJ")
+                            author_name = a_btnsfj.get_attribute("sfj") or a_btnsfj.text.strip()
+                        except:
+                            author_name = g_div.text.split('\n')[0].strip()
 
-    st.session_state.results = results
+                        if filter_calligrapher_list and (convert(author_name,'zh-tw') not in filter_calligrapher_list):
+                            continue
 
-    # 初始化 display_index
-    for word in search_words:
-        st.session_state.display_index[word] = 0
+                        results.append((word, author_name, img_url))
+                        word_found = True
 
-# ========== 顯示搜尋結果 & 收藏圖片邏輯（優化版） ==========
+                    # 如果這個字沒找到，先存 None
+                    if not word_found:
+                        results.append((word, "查無此字", None))
+
+                except Exception as e:
+                    results.append((word, "查無此字", None))
+                    st.warning(f"{word} 搜尋失敗: {e}")
+
+                # 更新進度與預估剩餘時間
+                completed = idx + 1
+                elapsed = time.time() - start_time
+                avg_time = elapsed / completed
+                remaining = (total_words - completed) * avg_time
+                remain_min = int(remaining // 60)
+                remain_sec = int(remaining % 60)
+
+                progress_bar.progress(completed / total_words)
+                status_text.text(
+                    f"正在搜尋第 {completed}/{total_words} 個字：{word} ⏳ 預估剩餘 {remain_min}分{remain_sec}秒"
+                )
+
+        finally:
+            if driver:
+                driver.quit()
+
+        # 如果全部字都沒有圖片 → 用 placeholder
+        has_any_image = any(img_url for _, _, img_url in results)
+        if not has_any_image:
+            results = [(word, "查無此字", placeholder_img_path) for word in search_words]
+
+        st.session_state.results = results
+
+        # 初始化 display_index
+        for word in search_words:
+            st.session_state.display_index[word] = 0
+
+# ================= 顯示搜尋結果 & 下一批圖片功能 =================
 results = st.session_state.get("results", [])
 if results:
     search_words = list(search_input_chinese.strip())
     groups_dict = defaultdict(list)
     for word, author, img_url in results:
         groups_dict[word].append((word, author, img_url))
-
-    # 預先將每個字的圖片分批
-    if "batches" not in st.session_state:
-        st.session_state.batches = {}
-        st.session_state.display_index = {}
-        for w in search_words:
-            items = groups_dict.get(w, [])
-            st.session_state.batches[w] = [
-                items[i:i+download_limit] for i in range(0, len(items), download_limit)
-            ]
-            st.session_state.display_index[w] = 0
 
     st.markdown(
         """
@@ -166,46 +171,38 @@ if results:
     )
 
     for w_idx, w in enumerate(search_words):
-        batches = st.session_state.batches.get(w, [])
-        if not batches:
+        group_items = groups_dict.get(w, [])
+        if not group_items:
             continue
-
-        batch_idx = st.session_state.display_index[w]
-        if batch_idx >= len(batches):
-            batch_idx = len(batches) - 1
-        batch_items = batches[batch_idx]
 
         st.subheader(f"🔍 {w} ({style_dict[style_value]})")
 
-        img_urls = [img_url for _, _, img_url in batch_items]
-        labels = [convert(author, 'zh-tw') for _, author, _ in batch_items]
+        start = st.session_state.display_index.get(w, 0)
+        end = min(start + download_limit, len(group_items))
+        batch_items = group_items[start:end]
 
-        # 每批固定 key
+        img_urls = [img_url for _, _, img_url in batch_items if img_url is not None]
+        labels = [f"{convert(author, 'zh-tw')}" for _, author, img_url in batch_items if img_url is not None]
+
         selected_idx = image_select(
             label=f"選擇 {w} 的圖片",
             images=img_urls,
             captions=labels,
             return_value="index",
-            key=f"img_select_{w_idx}_{batch_idx}",
-            use_container_width=False,
+            key=f"img_select_{w_idx}_{start}"
         )
 
+        st.session_state.selected_images = [x for x in st.session_state.selected_images if x[1] != w]
         if selected_idx is not None:
             word, author_name, img_url = batch_items[selected_idx]
-            # 保留已選圖片，不清掉其他批次
-            st.session_state.selected_images = [
-                x for x in st.session_state.selected_images if not (x[1] == w and x[2] == author_name)
-            ]
             st.session_state.selected_images.append((w_idx, word, author_name, img_url))
 
-        # 下一批按鈕
-        if batch_idx + 1 < len(batches):
-            if st.button(f"下一批 {w}", key=f"next_batch_{w_idx}_{batch_idx}"):
-                st.session_state.display_index[w] += 1
-                # 避免清掉已選圖片
-                st.experimental_rerun()
+        # 下一批按鈕（高效，不卡住）
+        if end < len(group_items):
+            if st.button(f"下一批 {w}", key=f"next_batch_{w_idx}_{w}"):
+                st.session_state.display_index[w] = start + download_limit
 
-# ========== 顯示已選圖片 ==========
+# ================= 顯示挑選圖片 =================
 if st.session_state.selected_images:
     st.subheader("✅ 你挑選的圖片（列水平排列，列內直向堆疊）")
     sorted_selected = sorted(st.session_state.selected_images, key=lambda x: x[0])
