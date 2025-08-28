@@ -206,10 +206,8 @@ if results:
 
         # 下一批按鈕
         if end < len(group_items):
-        next_key = f"next_batch_{w}_{instance_id}"
-        if st.button(f"下一批 {w}", key=next_key):
-            # 更新 display_index，下一次 rerun 自動生效
-            st.session_state.display_index[idx_key] = start + download_limit
+            if st.button(f"下一批 {w}", key=f"next_batch_{w}_{instance_id}"):
+                st.session_state.display_index[f"{w}_{instance_id}"] = start + download_limit
 
 # ================= 顯示挑選圖片 =================
 if st.session_state.selected_images:
