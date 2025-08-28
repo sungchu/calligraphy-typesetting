@@ -22,7 +22,7 @@ if "selected_images" not in st.session_state:
 if "display_index" not in st.session_state:
     st.session_state.display_index = {}
 
-st.title("書法字典圖片瀏覽器")
+st.title("書法字典圖瀏覽器")
 
 search_input = st.text_input("請輸入要搜尋的文字（標點符號將自動忽略，建議長度不超過30字）")
 search_input_chinese = "".join(re.findall(r"[\u4e00-\u9fff]+", search_input))
