@@ -114,7 +114,6 @@ if st.button("開始搜尋"):
                         results.append((word, author_name, img_url))
                         word_found = True
 
-                    # 如果這個字沒找到，先存 None
                     if not word_found:
                         results.append((word, "查無此字", None))
 
@@ -122,7 +121,6 @@ if st.button("開始搜尋"):
                     results.append((word, "查無此字", None))
                     st.warning(f"{word} 搜尋失敗: {e}")
 
-                # 更新進度與預估剩餘時間
                 completed = idx + 1
                 elapsed = time.time() - start_time
                 avg_time = elapsed / completed
@@ -139,15 +137,13 @@ if st.button("開始搜尋"):
             if driver:
                 driver.quit()
 
-        # 如果全部字都沒有圖片 → 用 placeholder
         has_any_image = any(img_url for _, _, img_url in results)
         if not has_any_image:
             results = [(word, "查無此字", placeholder_img_path) for word in search_words]
 
         st.session_state.results = results
 
-        # 初始化 display_index
-        # 使用字+出現次數作為 key
+        # 初始化 display_index，字+instance_id
         word_count = defaultdict(int)
         for word in search_words:
             word_count[word] += 1
@@ -174,18 +170,15 @@ if results:
         unsafe_allow_html=True
     )
 
-    # 記錄每個字出現的次數
     word_count = defaultdict(int)
-
     for w_idx, w in enumerate(search_words):
         word_count[w] += 1
-        instance_id = word_count[w]  # 這個字第幾次出現
+        instance_id = word_count[w]
         group_items = groups_dict.get(w, [])
         if not group_items:
             continue
 
         st.subheader(f"🔍 {w} ({style_dict[style_value]})")
-
         start = st.session_state.display_index.get(f"{w}_{instance_id}", 0)
         end = min(start + download_limit, len(group_items))
         batch_items = group_items[start:end]
@@ -201,6 +194,7 @@ if results:
             key=f"img_select_{w}_{instance_id}_{start}"
         )
 
+        # 限制每組只能選一張圖片
         st.session_state.selected_images = [
             x for x in st.session_state.selected_images if x[1] != f"{w}_{instance_id}"
         ]
