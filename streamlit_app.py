@@ -27,7 +27,7 @@ if "display_index" not in st.session_state:
 
 st.title("書法字典圖片瀏覽器")
 
-search_input = st.text_input("輸入要搜尋的文字（可多個字，無空格）")
+search_input = st.text_input("請輸入要搜尋的文字（標點符號將自動忽略，可同時輸入多個字，建議長度不超過30字）")
 search_input_chinese = "".join(re.findall(r"[\u4e00-\u9fff]+", search_input))
 style_dict = {"1": "章草", "3": "篆書", "4": "簡牘", "5": "魏碑",
               "6": "隸書", "7": "草書", "8": "行書", "9": "楷書"}
@@ -37,7 +37,7 @@ style_value = st.selectbox("選擇書法字體",
                            index=7)
 
 filter_calligrapher_input = st.text_input(
-    "指定特定書法家（若有多位，請用、分隔，留空則代表不指定）", ""
+    "指定特定書法家（若想指定多位，請用、分隔，留空則代表不指定 e.g. 王羲之、顏真卿、歐陽詢）", ""
 )
 if filter_calligrapher_input.strip():
     filter_calligrapher_list = [c.strip() for c in filter_calligrapher_input.split("、") if c.strip()]
@@ -51,7 +51,6 @@ placeholder_img_path = os.path.join(os.getcwd(), "查無此字.png")  # 同資�
 def safe_show_image(img_url, width=120):
     try:
         if not img_url:
-            st.write("⚠️ 沒有圖片")
             img = Image.open(placeholder_img_path)
             st.image(img, width=width)
             return
