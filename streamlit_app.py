@@ -52,6 +52,8 @@ def safe_show_image(img_url, width=120):
     try:
         if not img_url:
             st.write("⚠️ 沒有圖片")
+            img = Image.open(placeholder_img_path)
+            st.image(img, width=width)
             return
 
         if isinstance(img_url, str) and img_url.startswith("http"):
