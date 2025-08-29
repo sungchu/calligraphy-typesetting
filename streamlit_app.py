@@ -242,7 +242,7 @@ if results:
 if st.session_state.selected_images:
     st.subheader("✅ 你挑選的圖片（列水平排列，列內直向堆疊）")
     sorted_selected = sorted(st.session_state.selected_images, key=lambda x: x[0])
-    max_per_column = st.slider("每列最多顯示幾張圖片（垂直堆疊）", 1, 10, 3)
+    max_per_column = st.slider("一行最多顯示幾個字", 1, 10, 3)
 
     columns_data = [sorted_selected[i:i + max_per_column] for i in range(0, len(sorted_selected), max_per_column)]
     columns_data = columns_data[::-1]
