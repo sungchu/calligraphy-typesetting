@@ -200,18 +200,6 @@ if results:
     for word, author, img_url in results:
         groups_dict[word].append((word, author, img_url))
 
-    st.markdown(
-        """
-        <style>
-        .stImage img {
-            max-width: 120px !important;
-            height: auto !important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
     word_count = defaultdict(int)
     for w_idx, w in enumerate(search_words):
         word_count[w] += 1
@@ -262,4 +250,4 @@ if st.session_state.selected_images:
     for col, batch in zip(cols, columns_data):
         with col:
             for _, word, author, img_url in batch:
-                safe_show_image(img_url, width=120)
+                safe_show_image(img_url, width=60)
