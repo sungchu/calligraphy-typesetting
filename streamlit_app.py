@@ -13,6 +13,9 @@ from webdriver_manager.core.os_manager import ChromeType
 from collections import defaultdict
 import os
 from zhconv import convert
+from PIL import Image
+import requests
+from io import BytesIO
 
 # ================= 初始化 session_state =================
 if "results" not in st.session_state:
