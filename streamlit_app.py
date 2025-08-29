@@ -143,7 +143,8 @@ if st.button("開始搜尋"):
                         word_found = True
 
                     if not word_found:
-                        results.append((word, "查無此字", None))
+                        if not any(r[0] == word and r[1] == "查無此字" for r in results):
+                            results.append((word, "查無此字", None))
 
                 except Exception as e:
                     results.append((word, "查無此字", None))
