@@ -44,6 +44,30 @@ else:
 download_limit = 4
 placeholder_img_path = os.path.join(os.getcwd(), "查無此字.png")  # 同資料夾下
 
+# ================= 安全顯示圖片 =================
+def safe_show_image(img_url, width=120):
+    try:
+        if not img_url:
+            st.write("⚠️ 沒有圖片")
+            return
+
+        if isinstance(img_url, str) and img_url.startswith("http"):
+            resp = requests.get(img_url, timeout=5)
+            if resp.status_code != 200:
+                st.write("⚠️ 圖片下載失敗")
+                return
+            img = Image.open(BytesIO(resp.content))
+            st.image(img, width=width)
+        else:
+            # 假設是本地檔案
+            if os.path.exists(img_url):
+                img = Image.open(img_url)
+                st.image(img, width=width)
+            else:
+                st.write("⚠️ 找不到圖片檔案")
+    except Exception as e:
+        st.write(f"⚠️ 無法顯示圖片：{e}")
+
 # ================= 搜尋按鈕 =================
 if st.button("開始搜尋"):
     st.session_state.results = []
@@ -221,4 +245,4 @@ if st.session_state.selected_images:
     for col, batch in zip(cols, columns_data):
         with col:
             for _, word, author, img_url in batch:
-                st.image(img_url, width=120)
+                safe_show_image(img_url, width=120)
