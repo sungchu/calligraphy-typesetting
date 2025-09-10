@@ -95,16 +95,18 @@ from io import BytesIO
 import base64
 
 def image_to_base64(img_url, width=120):
-    """下載圖片並轉成 base64 方便在 HTML table 顯示"""
+    """下載圖片並轉成 base64，若失敗顯示 placeholder"""
     try:
         if img_url and img_url.startswith("http"):
-            resp = requests.get(img_url, timeout=5)
+            resp = requests.get(img_url, timeout=10)
             resp.raise_for_status()
             img = Image.open(BytesIO(resp.content))
+        elif img_url and os.path.exists(img_url):
+            img = Image.open(img_url)
         else:
-            return None
+            img = Image.open(placeholder_img_path)
 
-        # 強制放大圖片到 width，保持比例
+        # 放大或縮小到 width
         ratio = width / max(img.width, img.height)
         new_size = (int(img.width*ratio), int(img.height*ratio))
         img = img.resize(new_size, Image.ANTIALIAS)
@@ -113,8 +115,13 @@ def image_to_base64(img_url, width=120):
         img.save(buffer, format="PNG")
         b64 = base64.b64encode(buffer.getvalue()).decode()
         return f"data:image/png;base64,{b64}"
-    except Exception:
-        return None
+    except Exception as e:
+        print(f"圖片處理失敗: {e}")
+        img = Image.open(placeholder_img_path)
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        b64 = base64.b64encode(buffer.getvalue()).decode()
+        return f"data:image/png;base64,{b64}"
 
 
 def preview_layout(selected_data):
