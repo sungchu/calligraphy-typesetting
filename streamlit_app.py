@@ -388,6 +388,8 @@ with col_select:
             if end < len(group_items):
                 if st.button(f"下一批 {w}", key=f"next_batch_{w}_{instance_id}"):
                     st.session_state.display_index[f"{w}_{instance_id}"] = start + download_limit
+                    # 立即重新渲染頁面，顯示新的 batch
+                    st.experimental_rerun()
 with col_show:
     # ================= 顯示挑選圖片 =================
     if st.session_state.selected_images:
