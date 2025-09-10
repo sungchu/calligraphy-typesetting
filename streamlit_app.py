@@ -402,13 +402,19 @@ with col_select:
                     st.rerun()
                 else:
                     st.session_state[f"auto_select_first_{w}_{instance_id}"] = False
-                    
+    # ================= 顯示挑選圖片 =================                
 with col_show:
-    # ================= 顯示挑選圖片 =================
+    # 建立一個 placeholder 用來顯示更新狀態
+    status_placeholder = st.empty()
+
     if st.session_state.selected_images:
-        st.subheader("📖 預覽 Word 排版")
+        # 顯示更新中
+        status_placeholder.text("⏳ 更新中…")
+        
+        # 顯示預覽表格
         preview_layout(st.session_state.selected_images)
 
+        # 下載 Word
         buffer = download_word(st.session_state.selected_images)
         st.download_button(
             label="📥 下載 Word",
@@ -416,3 +422,6 @@ with col_show:
             file_name="selected_images.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
+        
+        # 清掉更新文字
+        status_placeholder.empty()
