@@ -84,6 +84,72 @@ def safe_show_image(img_url, width=120):
     except Exception as e:
         st.write(f"⚠️ 無法顯示圖片：{e}")
 
+# ================= 下載word =================
+from docx import Document
+from docx.shared import Inches, Pt
+from io import BytesIO
+import requests
+from PIL import Image
+
+def download_word(selected_data):
+    """
+    selected_data: list of tuples (idx, word, author, img_url)
+    """
+
+    # 建立 Word 文件
+    doc = Document()
+
+    # 建立表格：16 橫排、4 直行
+    table = doc.add_table(rows=16, cols=4)
+    table.autofit = False
+
+    # 設定行高：單數行高 1、偶數行高 3
+    for i, row in enumerate(table.rows):
+        if (i+1) % 2 == 1:  # 單數行
+            row.height = Inches(1)
+        else:  # 偶數行
+            row.height = Inches(3)
+
+    # 資料排序（從右上往下）
+    sorted_selected = sorted(selected_data, key=lambda x: x[0])
+
+    # 建立交替資料：word → image → word → image
+    layout_items = []
+    for _, word, author, img_url in sorted_selected:
+        layout_items.append(("word", word))
+        layout_items.append(("image", img_url))
+
+    # 從右上角開始填（先列後行）
+    total_cells = 16 * 4
+    for idx, item in enumerate(layout_items[:total_cells]):
+        row = idx % 16  # 行
+        col = 3 - (idx // 16)  # 右到左的列（0→左,3→右）
+        cell = table.cell(row, col)
+
+        if item[0] == "word":
+            # 插入文字
+            p = cell.paragraphs[0]
+            run = p.add_run(item[1])
+            run.font.size = Pt(16)
+        else:
+            # 插入圖片
+            img_url = item[1]
+            try:
+                response = requests.get(img_url)
+                image = Image.open(BytesIO(response.content))
+                image_stream = BytesIO()
+                image.save(image_stream, format="PNG")
+                image_stream.seek(0)
+                cell.paragraphs[0].add_run().add_picture(image_stream, width=Inches(0.8))
+            except Exception as e:
+                cell.text = "[圖片載入失敗]"
+
+    # 存到記憶體
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
+
 # ================= 搜尋按鈕 =================
 if st.button("開始搜尋"):
     st.session_state.results = []
@@ -251,3 +317,11 @@ if st.session_state.selected_images:
         with col:
             for _, word, author, img_url in batch:
                 safe_show_image(img_url, width=60)
+if st.button("下載 Word"):
+    buffer = download_word(st.session_state.selected_images)
+    st.download_button(
+        label="📥 下載 Word",
+        data=buffer,
+        file_name="selected_images.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
