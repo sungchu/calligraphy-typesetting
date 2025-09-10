@@ -16,7 +16,6 @@ from zhconv import convert
 from PIL import Image
 import requests
 from io import BytesIO
-from streamlit.runtime.scriptrunner import rerun
 
 # 設定頁面寬度
 st.set_page_config(layout="wide")
@@ -360,37 +359,40 @@ with col_select:
                 continue
 
             st.subheader(f"🔍 {w} ({style_dict[style_value]})")
+
+            # 建立 container，方便局部更新
+            container = st.container()
             start = st.session_state.display_index.get(f"{w}_{instance_id}", 0)
             end = min(start + download_limit, len(group_items))
             batch_items = group_items[start:end]
 
-            # 確保每個 batch 至少有一張圖片
-            img_urls = [img_url if img_url else placeholder_img_path for _, _, img_url in batch_items]
-            labels = [convert(author,'zh-tw') if img_url else "查無此字" for _, author, img_url in batch_items]
+            with container:
+                # 確保每 batch 至少有一張圖片
+                img_urls = [img_url if img_url else placeholder_img_path for _, _, img_url in batch_items]
+                labels = [convert(author,'zh-tw') if img_url else "查無此字" for _, author, img_url in batch_items]
 
-            selected_idx = image_select(
-                label=f"選擇 {w} 的圖片",
-                images=img_urls,
-                captions=labels,
-                return_value="index",
-                use_container_width  = False,
-                key=f"img_select_{w}_{instance_id}_{start}"
-            )
+                selected_idx = image_select(
+                    label=f"選擇 {w} 的圖片",
+                    images=img_urls,
+                    captions=labels,
+                    return_value="index",
+                    key=f"img_select_{w}_{instance_id}_{start}"
+                )
 
-            # 限制每組只能選一張圖片
-            st.session_state.selected_images = [
-                x for x in st.session_state.selected_images if x[1] != f"{w}_{instance_id}"
-            ]
-            if selected_idx is not None:
-                word_sel, author_name, img_url = batch_items[selected_idx]
-                st.session_state.selected_images.append((w_idx, f"{w}_{instance_id}", author_name, img_url))
+                # 限制每組只能選一張圖片
+                st.session_state.selected_images = [
+                    x for x in st.session_state.selected_images if x[1] != f"{w}_{instance_id}"
+                ]
+                if selected_idx is not None:
+                    word_sel, author_name, img_url = batch_items[selected_idx]
+                    st.session_state.selected_images.append((w_idx, f"{w}_{instance_id}", author_name, img_url))
 
-            # 下一批按鈕
-            if end < len(group_items):
-                if st.button(f"下一批 {w}", key=f"next_batch_{w}_{instance_id}"):
-                    st.session_state.display_index[f"{w}_{instance_id}"] = start + download_limit
-                    # 立即重新渲染頁面，顯示新的 batch
-                    rerun()
+                # 下一批按鈕
+                if end < len(group_items):
+                    if st.button(f"下一批 {w}", key=f"next_batch_{w}_{instance_id}"):
+                        st.session_state.display_index[f"{w}_{instance_id}"] = start + download_limit
+                        container.empty()  # 清空 container，下一次會重新渲染下一批
+                    
 with col_show:
     # ================= 顯示挑選圖片 =================
     if st.session_state.selected_images:
