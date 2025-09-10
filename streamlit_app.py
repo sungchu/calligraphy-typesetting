@@ -64,7 +64,7 @@ with col_calligrapher:
         filter_calligrapher_list = None
 
 # download_limit = 6
-download_limit = st.number_input("每個字最多出現幾個選項（輸入整數）"min_value=1, max_value=10, value=5, step=1)
+download_limit = st.number_input("每個字最多出現幾個選項（輸入整數）",min_value=1, max_value=10, value=5, step=1)
 placeholder_img_path = os.path.join(os.getcwd(), "查無此字.png")  # 同資料夾下
 
 # ================= 安全顯示圖片 =================
