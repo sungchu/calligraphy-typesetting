@@ -148,9 +148,9 @@ def preview_layout(selected_data):
     # 轉成 HTML table
     table_html = "<table style='border-collapse:collapse;margin:auto;'>"
     for r in range(12):
-        height = "30px" if (r+1) % 2 == 1 else "90px"  # 模擬 Word 行高
+        height = "30px" if (r+1) % 2 == 1 else "90px"
         table_html += f"<tr style='height:{height};'>"
-        for c in range(4):
+        for c in range(5):
             table_html += f"<td style='border:1px solid #ccc;width:120px;text-align:center;vertical-align:middle'>{cells[r][c]}</td>"
         table_html += "</tr>"
     table_html += "</table>"
@@ -168,56 +168,47 @@ def download_word(selected_data):
     """
     selected_data: list of tuples (idx, word, author, img_url)
     """
-
-    # 建立 Word 文件
     doc = Document()
     
-    # 設定頁面邊界：上下 1 公分，左右可依需求設定
+    # 設定頁面邊界
     section = doc.sections[0]
     section.top_margin = Cm(1)
     section.bottom_margin = Cm(1)
-    # 如果也要左右設定，可以加上：
-    # section.left_margin = Cm(1)
-    # section.right_margin = Cm(1)
     
-    # 建立表格：12 橫排、4 直行
+    # 建立表格：12 橫排、5 直行
     table = doc.add_table(rows=12, cols=5)
     table.autofit = False
 
-    # 設定行高：單數行高 1、偶數行高 3
+    # 設定行高
     for i, row in enumerate(table.rows):
-        if (i+1) % 2 == 1:  # 單數行
+        if (i+1) % 2 == 1:
             row.height = Cm(0.8)
-        else:  # 偶數行
+        else:
             row.height = Cm(3)
 
-    # 資料排序（從右上往下）
+    # 排序資料
     sorted_selected = sorted(selected_data, key=lambda x: x[0])
-
-    # 建立交替資料：word → image → word → image
     layout_items = []
     for _, word, author, img_url in sorted_selected:
         layout_items.append(("word", word[0]))
         layout_items.append(("image", img_url))
 
-    # 從右上角開始填（先列後行）
+    # 填入表格
     total_cells = 12 * 5
     for idx, item in enumerate(layout_items[:total_cells]):
-        row = idx % 12  # 行
-        col = 4 - (idx // 12)  # 右到左的列（0→左,4→右）
-        
-        if col < 0 or col > 4 or row < 0 or row > 11:
-            continue  # 超界就跳過
+        row = idx % 12
+        col = 4 - (idx // 12)  # 右到左
+
+        if col < 0 or col > 4:
+            continue
         
         cell = table.cell(row, col)
 
         if item[0] == "word":
-            # 插入文字
             p = cell.paragraphs[0]
             run = p.add_run(item[1])
             run.font.size = Pt(12)
         else:
-            # 插入圖片
             img_url = item[1]
             try:
                 response = requests.get(img_url)
@@ -226,10 +217,9 @@ def download_word(selected_data):
                 image.save(image_stream, format="PNG")
                 image_stream.seek(0)
                 cell.paragraphs[0].add_run().add_picture(image_stream, width=Cm(3))
-            except Exception as e:
+            except:
                 cell.text = "[圖片載入失敗]"
 
-    # 存到記憶體
     buffer = BytesIO()
     doc.save(buffer)
     buffer.seek(0)
@@ -404,17 +394,11 @@ with col_select:
                     st.session_state[f"auto_select_first_{w}_{instance_id}"] = False
     # ================= 顯示挑選圖片 =================                
 with col_show:
-    # 建立一個 placeholder 用來顯示更新狀態
     status_placeholder = st.empty()
-
     if st.session_state.selected_images:
-        # 顯示更新中
         status_placeholder.text("⏳ 更新中…")
         
-        # 顯示預覽表格
         preview_layout(st.session_state.selected_images)
-
-        # 下載 Word
         buffer = download_word(st.session_state.selected_images)
         st.download_button(
             label="📥 下載 Word",
@@ -422,6 +406,4 @@ with col_show:
             file_name="selected_images.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
-        
-        # 清掉更新文字
         status_placeholder.empty()
