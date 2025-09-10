@@ -195,6 +195,10 @@ def download_word(selected_data):
     for idx, item in enumerate(layout_items[:total_cells]):
         row = idx % 12  # 行
         col = 3 - (idx // 12)  # 右到左的列（0→左,3→右）
+        
+        if col < 0 or col > 3 or row < 0 or row > 15:
+        continue  # 超界就跳過
+        
         cell = table.cell(row, col)
 
         if item[0] == "word":
