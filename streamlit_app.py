@@ -43,7 +43,7 @@ st.markdown(
 )
 
 # ================= 輸入欄位 =================
-col_input, col_style, col_dl, col_calligrapher = st.columns([2,0.8,0.8,1.6])
+col_input, col_style, col_dl, col_calligrapher = st.columns([2,0.8,0.8,1.8])
 with col_input:
     search_input = st.text_input("請輸入要搜尋的文字（標點符號將自動忽略，可同時輸入多個字，建議長度不超過30字）")
     search_input_chinese = "".join(re.findall(r"[\u4e00-\u9fff]+", search_input))
@@ -59,7 +59,7 @@ with col_dl:
     download_limit = st.number_input("每個字最多出現幾個選項",min_value=1, max_value=10, value=5, step=1)
 with col_calligrapher:
     filter_calligrapher_input = st.text_input(
-        "指定特定書法家（若想指定多位，請用、分隔，留空則代表不指定 e.g. 王羲之、顏真卿、歐陽詢）", ""
+        "指定特定書法家（若想指定多位，請用、分隔，留空則代表不指定 e.g. 王羲之、顏真卿）", ""
     )
     if filter_calligrapher_input.strip():
         filter_calligrapher_list = [c.strip() for c in filter_calligrapher_input.split("、") if c.strip()]
