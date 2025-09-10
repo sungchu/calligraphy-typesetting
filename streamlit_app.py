@@ -56,7 +56,7 @@ with col_style:
                                index=7)
 with col_dl:
     # download_limit = 6
-    download_limit = st.number_input("每個字最多出現幾個選項（輸入整數）",min_value=1, max_value=10, value=5, step=1)
+    download_limit = st.number_input("每個字最多出現幾個選項",min_value=1, max_value=10, value=5, step=1)
 with col_calligrapher:
     filter_calligrapher_input = st.text_input(
         "指定特定書法家（若想指定多位，請用、分隔，留空則代表不指定 e.g. 王羲之、顏真卿、歐陽詢）", ""
