@@ -3,3 +3,4 @@ streamlit-image-select==0.6.0
 seleniumbase
 webdriver-manager
 zhconv==1.4.3
+python-docx
