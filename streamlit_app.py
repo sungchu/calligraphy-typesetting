@@ -225,6 +225,7 @@ def download_word(selected_data):
     buffer.seek(0)
     return buffer
 
+col_select, col_show, = st.columns([1.5, 1])
 # ================= 搜尋按鈕 =================
 if st.button("開始搜尋"):
     st.session_state.results = []
@@ -236,7 +237,7 @@ if st.button("開始搜尋"):
     total_words = len(search_words)
     progress_bar = st.progress(0, text='搜尋中，請稍後')
     status_text = st.empty()
-
+    
     # Spinner 轉圈圈
     with st.spinner("🔄 搜尋中，請稍後..."):
         # ================= Selenium 設定 =================
@@ -320,74 +321,76 @@ if st.button("開始搜尋"):
                 driver.quit()
 
         # 如果整體沒有任何圖片，給 placeholder
-        has_any_image = any(img_url for _, _, img_url in results)
-        if not has_any_image:
-            results = [(word, "查無此字", placeholder_img_path) for word in search_words]
+        with col_select:
+            has_any_image = any(img_url for _, _, img_url in results)
+            if not has_any_image:
+                results = [(word, "查無此字", placeholder_img_path) for word in search_words]
 
-        st.session_state.results = results
+            st.session_state.results = results
 
-        # 初始化 display_index，字+instance_id
-        word_count = defaultdict(int)
-        for word in search_words:
-            word_count[word] += 1
-            instance_id = word_count[word]
-            st.session_state.display_index[f"{word}_{instance_id}"] = 0
+            # 初始化 display_index，字+instance_id
+            word_count = defaultdict(int)
+            for word in search_words:
+                word_count[word] += 1
+                instance_id = word_count[word]
+                st.session_state.display_index[f"{word}_{instance_id}"] = 0
 
 # ================= 顯示搜尋結果 & 下一批圖片功能 =================
-results = st.session_state.get("results", [])
-if results:
-    search_words = list(search_input_chinese.strip())
-    groups_dict = defaultdict(list)
-    for word, author, img_url in results:
-        groups_dict[word].append((word, author, img_url))
+with col_show:
+    results = st.session_state.get("results", [])
+    if results:
+        search_words = list(search_input_chinese.strip())
+        groups_dict = defaultdict(list)
+        for word, author, img_url in results:
+            groups_dict[word].append((word, author, img_url))
 
-    word_count = defaultdict(int)
-    for w_idx, w in enumerate(search_words):
-        word_count[w] += 1
-        instance_id = word_count[w]
-        group_items = groups_dict.get(w, [])
-        if not group_items:
-            continue
+        word_count = defaultdict(int)
+        for w_idx, w in enumerate(search_words):
+            word_count[w] += 1
+            instance_id = word_count[w]
+            group_items = groups_dict.get(w, [])
+            if not group_items:
+                continue
 
-        st.subheader(f"🔍 {w} ({style_dict[style_value]})")
-        start = st.session_state.display_index.get(f"{w}_{instance_id}", 0)
-        end = min(start + download_limit, len(group_items))
-        batch_items = group_items[start:end]
+            st.subheader(f"🔍 {w} ({style_dict[style_value]})")
+            start = st.session_state.display_index.get(f"{w}_{instance_id}", 0)
+            end = min(start + download_limit, len(group_items))
+            batch_items = group_items[start:end]
 
-        # 確保每個 batch 至少有一張圖片
-        img_urls = [img_url if img_url else placeholder_img_path for _, _, img_url in batch_items]
-        labels = [convert(author,'zh-tw') if img_url else "查無此字" for _, author, img_url in batch_items]
+            # 確保每個 batch 至少有一張圖片
+            img_urls = [img_url if img_url else placeholder_img_path for _, _, img_url in batch_items]
+            labels = [convert(author,'zh-tw') if img_url else "查無此字" for _, author, img_url in batch_items]
 
-        selected_idx = image_select(
-            label=f"選擇 {w} 的圖片",
-            images=img_urls,
-            captions=labels,
-            return_value="index",
-            key=f"img_select_{w}_{instance_id}_{start}"
+            selected_idx = image_select(
+                label=f"選擇 {w} 的圖片",
+                images=img_urls,
+                captions=labels,
+                return_value="index",
+                key=f"img_select_{w}_{instance_id}_{start}"
+            )
+
+            # 限制每組只能選一張圖片
+            st.session_state.selected_images = [
+                x for x in st.session_state.selected_images if x[1] != f"{w}_{instance_id}"
+            ]
+            if selected_idx is not None:
+                word_sel, author_name, img_url = batch_items[selected_idx]
+                st.session_state.selected_images.append((w_idx, f"{w}_{instance_id}", author_name, img_url))
+
+            # 下一批按鈕
+            if end < len(group_items):
+                if st.button(f"下一批 {w}", key=f"next_batch_{w}_{instance_id}"):
+                    st.session_state.display_index[f"{w}_{instance_id}"] = start + download_limit
+
+    # ================= 顯示挑選圖片 =================
+    if st.session_state.selected_images:
+        st.subheader("📖 預覽 Word 排版")
+        preview_layout(st.session_state.selected_images)
+
+        buffer = download_word(st.session_state.selected_images)
+        st.download_button(
+            label="📥 下載 Word",
+            data=buffer,
+            file_name="selected_images.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
-
-        # 限制每組只能選一張圖片
-        st.session_state.selected_images = [
-            x for x in st.session_state.selected_images if x[1] != f"{w}_{instance_id}"
-        ]
-        if selected_idx is not None:
-            word_sel, author_name, img_url = batch_items[selected_idx]
-            st.session_state.selected_images.append((w_idx, f"{w}_{instance_id}", author_name, img_url))
-
-        # 下一批按鈕
-        if end < len(group_items):
-            if st.button(f"下一批 {w}", key=f"next_batch_{w}_{instance_id}"):
-                st.session_state.display_index[f"{w}_{instance_id}"] = start + download_limit
-
-# ================= 顯示挑選圖片 =================
-if st.session_state.selected_images:
-    st.subheader("📖 預覽 Word 排版")
-    preview_layout(st.session_state.selected_images)
-
-    buffer = download_word(st.session_state.selected_images)
-    st.download_button(
-        label="📥 下載 Word",
-        data=buffer,
-        file_name="selected_images.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
