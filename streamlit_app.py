@@ -42,22 +42,26 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-search_input = st.text_input("請輸入要搜尋的文字（標點符號將自動忽略，可同時輸入多個字，建議長度不超過30字）")
-search_input_chinese = "".join(re.findall(r"[\u4e00-\u9fff]+", search_input))
-style_dict = {"1": "章草", "3": "篆書", "4": "簡牘", "5": "魏碑",
-              "6": "隸書", "7": "草書", "8": "行書", "9": "楷書"}
-style_value = st.selectbox("選擇書法字體",
-                           options=list(style_dict.keys()),
-                           format_func=lambda x: style_dict[x],
-                           index=7)
-
-filter_calligrapher_input = st.text_input(
-    "指定特定書法家（若想指定多位，請用、分隔，留空則代表不指定 e.g. 王羲之、顏真卿、歐陽詢）", ""
-)
-if filter_calligrapher_input.strip():
-    filter_calligrapher_list = [c.strip() for c in filter_calligrapher_input.split("、") if c.strip()]
-else:
-    filter_calligrapher_list = None
+# ================= 輸入欄位 =================
+col_input, col_style, col_calligrapher= st.columns([5,2,2])
+with col_input:
+    search_input = st.text_input("請輸入要搜尋的文字（標點符號將自動忽略，可同時輸入多個字，建議長度不超過30字）")
+    search_input_chinese = "".join(re.findall(r"[\u4e00-\u9fff]+", search_input))
+with col_style:
+    style_dict = {"1": "章草", "3": "篆書", "4": "簡牘", "5": "魏碑",
+                  "6": "隸書", "7": "草書", "8": "行書", "9": "楷書"}
+    style_value = st.selectbox("選擇書法字體",
+                               options=list(style_dict.keys()),
+                               format_func=lambda x: style_dict[x],
+                               index=7)
+with col_calligrapher:
+    filter_calligrapher_input = st.text_input(
+        "指定特定書法家（若想指定多位，請用、分隔，留空則代表不指定 e.g. 王羲之、顏真卿、歐陽詢）", ""
+    )
+    if filter_calligrapher_input.strip():
+        filter_calligrapher_list = [c.strip() for c in filter_calligrapher_input.split("、") if c.strip()]
+    else:
+        filter_calligrapher_list = None
 
 download_limit = 4
 placeholder_img_path = os.path.join(os.getcwd(), "查無此字.png")  # 同資料夾下
