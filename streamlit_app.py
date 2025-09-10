@@ -197,7 +197,7 @@ def download_word(selected_data):
         col = 3 - (idx // 12)  # 右到左的列（0→左,3→右）
         
         if col < 0 or col > 3 or row < 0 or row > 15:
-        continue  # 超界就跳過
+            continue  # 超界就跳過
         
         cell = table.cell(row, col)
 
