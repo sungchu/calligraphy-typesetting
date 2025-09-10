@@ -94,7 +94,7 @@ from PIL import Image
 from io import BytesIO
 import base64
 
-def image_to_base64(img_url, width=200):
+def image_to_base64(img_url, width=120):
     """下載圖片並轉成 base64 方便在 HTML table 顯示"""
     try:
         if img_url and img_url.startswith("http"):
@@ -103,8 +103,12 @@ def image_to_base64(img_url, width=200):
             img = Image.open(BytesIO(resp.content))
         else:
             return None
-        # 縮小圖片
-        img.thumbnail((width, width))
+
+        # 強制放大圖片到 width，保持比例
+        ratio = width / max(img.width, img.height)
+        new_size = (int(img.width*ratio), int(img.height*ratio))
+        img = img.resize(new_size, Image.ANTIALIAS)
+
         buffer = BytesIO()
         img.save(buffer, format="PNG")
         b64 = base64.b64encode(buffer.getvalue()).decode()
