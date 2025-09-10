@@ -181,7 +181,7 @@ def download_word(selected_data):
     # section.right_margin = Cm(1)
     
     # 建立表格：12 橫排、4 直行
-    table = doc.add_table(rows=12, cols=4)
+    table = doc.add_table(rows=12, cols=5)
     table.autofit = False
 
     # 設定行高：單數行高 1、偶數行高 3
@@ -201,12 +201,12 @@ def download_word(selected_data):
         layout_items.append(("image", img_url))
 
     # 從右上角開始填（先列後行）
-    total_cells = 12 * 4
+    total_cells = 12 * 5
     for idx, item in enumerate(layout_items[:total_cells]):
         row = idx % 12  # 行
-        col = 3 - (idx // 12)  # 右到左的列（0→左,3→右）
+        col = 4 - (idx // 12)  # 右到左的列（0→左,4→右）
         
-        if col < 0 or col > 3 or row < 0 or row > 15:
+        if col < 0 or col > 4 or row < 0 or row > 11:
             continue  # 超界就跳過
         
         cell = table.cell(row, col)
