@@ -324,22 +324,21 @@ if st.button("開始搜尋"):
                 driver.quit()
 
         # 如果整體沒有任何圖片，給 placeholder
-        with col_select:
-            has_any_image = any(img_url for _, _, img_url in results)
-            if not has_any_image:
-                results = [(word, "查無此字", placeholder_img_path) for word in search_words]
+        has_any_image = any(img_url for _, _, img_url in results)
+        if not has_any_image:
+            results = [(word, "查無此字", placeholder_img_path) for word in search_words]
 
-            st.session_state.results = results
+        st.session_state.results = results
 
-            # 初始化 display_index，字+instance_id
-            word_count = defaultdict(int)
-            for word in search_words:
-                word_count[word] += 1
-                instance_id = word_count[word]
-                st.session_state.display_index[f"{word}_{instance_id}"] = 0
+        # 初始化 display_index，字+instance_id
+        word_count = defaultdict(int)
+        for word in search_words:
+            word_count[word] += 1
+            instance_id = word_count[word]
+            st.session_state.display_index[f"{word}_{instance_id}"] = 0
 
 # ================= 顯示搜尋結果 & 下一批圖片功能 =================
-with col_show:
+with col_select:
     results = st.session_state.get("results", [])
     if results:
         search_words = list(search_input_chinese.strip())
@@ -384,7 +383,7 @@ with col_show:
             if end < len(group_items):
                 if st.button(f"下一批 {w}", key=f"next_batch_{w}_{instance_id}"):
                     st.session_state.display_index[f"{w}_{instance_id}"] = start + download_limit
-
+with col_show:
     # ================= 顯示挑選圖片 =================
     if st.session_state.selected_images:
         st.subheader("📖 預覽 Word 排版")
