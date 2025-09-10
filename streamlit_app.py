@@ -111,21 +111,21 @@ def image_to_base64(img_url, width=60):
 
 
 def preview_layout(selected_data):
-    """在 Streamlit 畫出和 Word 相同的 4直行×16橫排 排版"""
+    """在 Streamlit 畫出和 Word 相同的 4直行×12橫排 排版"""
     sorted_selected = sorted(selected_data, key=lambda x: x[0])
 
     # 建立交替資料：word → image → word → image
     layout_items = []
     for _, word, author, img_url in sorted_selected:
-        layout_items.append(("word", word))
+        layout_items.append(("word", word[0]))
         layout_items.append(("image", img_url))
 
-    total_cells = 16 * 4
-    cells = [["" for _ in range(4)] for _ in range(16)]
+    total_cells = 12 * 4
+    cells = [["" for _ in range(4)] for _ in range(12)]
 
     for idx, item in enumerate(layout_items[:total_cells]):
-        row = idx % 16
-        col = 3 - (idx // 16)  # 右到左
+        row = idx % 12
+        col = 3 - (idx // 12)  # 右到左
         if item[0] == "word":
             cells[row][col] = f"<div style='font-size:20px;text-align:center'>{item[1]}</div>"
         else:
@@ -137,7 +137,7 @@ def preview_layout(selected_data):
 
     # 轉成 HTML table
     table_html = "<table style='border-collapse:collapse;margin:auto;'>"
-    for r in range(16):
+    for r in range(12):
         height = "30px" if (r+1) % 2 == 1 else "90px"  # 模擬 Word 行高
         table_html += f"<tr style='height:{height};'>"
         for c in range(4):
@@ -191,17 +191,17 @@ def download_word(selected_data):
         layout_items.append(("image", img_url))
 
     # 從右上角開始填（先列後行）
-    total_cells = 16 * 4
+    total_cells = 12 * 4
     for idx, item in enumerate(layout_items[:total_cells]):
-        row = idx % 16  # 行
-        col = 3 - (idx // 16)  # 右到左的列（0→左,3→右）
+        row = idx % 12  # 行
+        col = 3 - (idx // 12)  # 右到左的列（0→左,3→右）
         cell = table.cell(row, col)
 
         if item[0] == "word":
             # 插入文字
             p = cell.paragraphs[0]
             run = p.add_run(item[1])
-            run.font.size = Pt(16)
+            run.font.size = Pt(12)
         else:
             # 插入圖片
             img_url = item[1]
