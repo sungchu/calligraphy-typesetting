@@ -43,7 +43,7 @@ st.markdown(
 )
 
 # ================= 輸入欄位 =================
-col_input, col_style, col_dl, col_calligrapher = st.columns([2.2,0.5,0.5,2])
+col_input, col_style, col_dl, col_calligrapher = st.columns([2,0.8,0.8,1.6])
 with col_input:
     search_input = st.text_input("請輸入要搜尋的文字（標點符號將自動忽略，可同時輸入多個字，建議長度不超過30字）")
     search_input_chinese = "".join(re.findall(r"[\u4e00-\u9fff]+", search_input))
