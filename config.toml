@@ -1,0 +1,12 @@
+[theme]
+# 主色：古籍暖棕
+primaryColor = "#8B5E3C"
+
+# 主畫面背景：柔和米色
+backgroundColor = "#FDF6E3"
+
+# 次背景：卡片/容器區隔
+secondaryBackgroundColor = "#F7EFE4"
+
+# 文字顏色：深棕/墨灰
+textColor = "#3B2F2F"
