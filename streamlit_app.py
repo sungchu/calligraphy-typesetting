@@ -228,7 +228,6 @@ def download_word(selected_data):
     buffer.seek(0)
     return buffer
 
-col_1, col_select, col_show, col4= st.columns([0.2, 1, 1, 0.2])
 # ================= 搜尋按鈕 =================
 if st.button("開始搜尋"):
     st.session_state.results = []
@@ -337,6 +336,7 @@ if st.button("開始搜尋"):
             instance_id = word_count[word]
             st.session_state.display_index[f"{word}_{instance_id}"] = 0
 
+col_1, col_select, col_empty, col_show, col4= st.columns([0.2, 1, 0.05, 1, 0.2])
 # ================= 顯示搜尋結果 & 下一批圖片功能 =================
 with col_select:
     results = st.session_state.get("results", [])
