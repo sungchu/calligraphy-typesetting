@@ -368,6 +368,7 @@ with col_select:
                 images=img_urls,
                 captions=labels,
                 return_value="index",
+                use_container_width  = False
                 key=f"img_select_{w}_{instance_id}_{start}"
             )
 
