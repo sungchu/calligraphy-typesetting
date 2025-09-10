@@ -367,12 +367,16 @@ with col_select:
             img_urls = [img_url if img_url else placeholder_img_path for _, _, img_url in batch_items]
             labels = [convert(author,'zh-tw') if img_url else "查無此字" for _, author, img_url in batch_items]
 
+            # 假設自動選第一張圖片，避免下一批按鈕要點圖片
+            auto_select_first = st.session_state.get(f"auto_select_first_{w}_{instance_id}", True)
+            default_index = 0 if auto_select_first and batch_items else None
+
             selected_idx = image_select(
                 label=f"選擇 {w} 的圖片",
                 images=img_urls,
                 captions=labels,
                 return_value="index",
-                use_container_width  = False,
+                use_container_width=False,
                 key=f"img_select_{w}_{instance_id}_{start}"
             )
 
@@ -387,14 +391,10 @@ with col_select:
             # 下一批按鈕
             if end < len(group_items):
                 if st.button(f"下一批 {w}", key=f"next_batch_{w}_{instance_id}"):
-                    # 自動選擇該組第一張圖片（如果還沒選過）
-                    if not any(x[1] == f"{w}_{instance_id}" for x in st.session_state.selected_images):
-                        first_word_sel, first_author_name, first_img_url = batch_items[0]
-                        st.session_state.selected_images.append(
-                            (w_idx, f"{w}_{instance_id}", first_author_name, first_img_url)
-                        )
-                    # 更新顯示 index 到下一批
                     st.session_state.display_index[f"{w}_{instance_id}"] = start + download_limit
+                    st.session_state[f"auto_select_first_{w}_{instance_id}"] = True  # 自動選第一張
+                else:
+                    st.session_state[f"auto_select_first_{w}_{instance_id}"] = False
                     
 with col_show:
     # ================= 顯示挑選圖片 =================
