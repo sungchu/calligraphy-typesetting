@@ -359,39 +359,42 @@ with col_select:
                 continue
 
             st.subheader(f"🔍 {w} ({style_dict[style_value]})")
-
-            # 建立 container，方便局部更新
-            container = st.container()
             start = st.session_state.display_index.get(f"{w}_{instance_id}", 0)
             end = min(start + download_limit, len(group_items))
             batch_items = group_items[start:end]
 
-            with container:
-                # 確保每 batch 至少有一張圖片
-                img_urls = [img_url if img_url else placeholder_img_path for _, _, img_url in batch_items]
-                labels = [convert(author,'zh-tw') if img_url else "查無此字" for _, author, img_url in batch_items]
+            # 確保每個 batch 至少有一張圖片
+            img_urls = [img_url if img_url else placeholder_img_path for _, _, img_url in batch_items]
+            labels = [convert(author,'zh-tw') if img_url else "查無此字" for _, author, img_url in batch_items]
 
-                selected_idx = image_select(
-                    label=f"選擇 {w} 的圖片",
-                    images=img_urls,
-                    captions=labels,
-                    return_value="index",
-                    key=f"img_select_{w}_{instance_id}_{start}"
-                )
+            selected_idx = image_select(
+                label=f"選擇 {w} 的圖片",
+                images=img_urls,
+                captions=labels,
+                return_value="index",
+                use_container_width  = False,
+                key=f"img_select_{w}_{instance_id}_{start}"
+            )
 
-                # 限制每組只能選一張圖片
-                st.session_state.selected_images = [
-                    x for x in st.session_state.selected_images if x[1] != f"{w}_{instance_id}"
-                ]
-                if selected_idx is not None:
-                    word_sel, author_name, img_url = batch_items[selected_idx]
-                    st.session_state.selected_images.append((w_idx, f"{w}_{instance_id}", author_name, img_url))
+            # 限制每組只能選一張圖片
+            st.session_state.selected_images = [
+                x for x in st.session_state.selected_images if x[1] != f"{w}_{instance_id}"
+            ]
+            if selected_idx is not None:
+                word_sel, author_name, img_url = batch_items[selected_idx]
+                st.session_state.selected_images.append((w_idx, f"{w}_{instance_id}", author_name, img_url))
 
-                # 下一批按鈕
-                if end < len(group_items):
-                    if st.button(f"下一批 {w}", key=f"next_batch_{w}_{instance_id}"):
-                        st.session_state.display_index[f"{w}_{instance_id}"] = start + download_limit
-                        container.empty()  # 清空 container，下一次會重新渲染下一批
+            # 下一批按鈕
+            if end < len(group_items):
+                if st.button(f"下一批 {w}", key=f"next_batch_{w}_{instance_id}"):
+                    # 自動選擇該組第一張圖片（如果還沒選過）
+                    if not any(x[1] == f"{w}_{instance_id}" for x in st.session_state.selected_images):
+                        first_word_sel, first_author_name, first_img_url = batch_items[0]
+                        st.session_state.selected_images.append(
+                            (w_idx, f"{w}_{instance_id}", first_author_name, first_img_url)
+                        )
+                    # 更新顯示 index 到下一批
+                    st.session_state.display_index[f"{w}_{instance_id}"] = start + download_limit
                     
 with col_show:
     # ================= 顯示挑選圖片 =================
