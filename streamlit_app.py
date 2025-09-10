@@ -54,6 +54,9 @@ with col_style:
                                options=list(style_dict.keys()),
                                format_func=lambda x: style_dict[x],
                                index=7)
+with col_dl:
+    # download_limit = 6
+    download_limit = st.number_input("每個字最多出現幾個選項（輸入整數）",min_value=1, max_value=10, value=5, step=1)
 with col_calligrapher:
     filter_calligrapher_input = st.text_input(
         "指定特定書法家（若想指定多位，請用、分隔，留空則代表不指定 e.g. 王羲之、顏真卿、歐陽詢）", ""
@@ -63,8 +66,7 @@ with col_calligrapher:
     else:
         filter_calligrapher_list = None
 
-# download_limit = 6
-download_limit = st.number_input("每個字最多出現幾個選項（輸入整數）",min_value=1, max_value=10, value=5, step=1)
+
 placeholder_img_path = os.path.join(os.getcwd(), "查無此字.png")  # 同資料夾下
 
 # ================= 安全顯示圖片 =================
