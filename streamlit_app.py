@@ -98,15 +98,23 @@ def download_word(selected_data):
 
     # 建立 Word 文件
     doc = Document()
-
-    # 建立表格：16 橫排、4 直行
-    table = doc.add_table(rows=16, cols=4)
+    
+    # 設定頁面邊界：上下 1 公分，左右可依需求設定
+    section = doc.sections[0]
+    section.top_margin = Cm(1)
+    section.bottom_margin = Cm(1)
+    # 如果也要左右設定，可以加上：
+    # section.left_margin = Cm(1)
+    # section.right_margin = Cm(1)
+    
+    # 建立表格：12 橫排、4 直行
+    table = doc.add_table(rows=12, cols=4)
     table.autofit = False
 
     # 設定行高：單數行高 1、偶數行高 3
     for i, row in enumerate(table.rows):
         if (i+1) % 2 == 1:  # 單數行
-            row.height = Cm(1)
+            row.height = Cm(0.8)
         else:  # 偶數行
             row.height = Cm(3)
 
@@ -116,7 +124,7 @@ def download_word(selected_data):
     # 建立交替資料：word → image → word → image
     layout_items = []
     for _, word, author, img_url in sorted_selected:
-        layout_items.append(("word", word))
+        layout_items.append(("word", word[0]))
         layout_items.append(("image", img_url))
 
     # 從右上角開始填（先列後行）
