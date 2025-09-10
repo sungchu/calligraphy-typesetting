@@ -63,7 +63,7 @@ download_limit = 4
 placeholder_img_path = os.path.join(os.getcwd(), "查無此字.png")  # 同資料夾下
 
 # ================= 安全顯示圖片 =================
-def safe_show_image(img_url, width=120):
+def safe_show_image(img_url, width=60):
     try:
         if not img_url:
             img = Image.open(placeholder_img_path)
