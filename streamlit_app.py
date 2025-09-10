@@ -33,7 +33,7 @@ st.markdown(
     """
     <style>
     .stImage img {
-        width: 60px !important;   /* 強制寬度 */
+        width: 120px !important;   /* 強制寬度 */
         height: auto !important;   /* 保持比例 */
         border-radius: 0 !important; /* 順便把圓角也拿掉 */
     }
@@ -94,7 +94,7 @@ from PIL import Image
 from io import BytesIO
 import base64
 
-def image_to_base64(img_url, width=200):
+def image_to_base64(img_url, width=120):
     """下載圖片並轉成 base64 方便在 HTML table 顯示"""
     try:
         if img_url and img_url.startswith("http"):
@@ -144,7 +144,7 @@ def preview_layout(selected_data):
         height = "30px" if (r+1) % 2 == 1 else "90px"  # 模擬 Word 行高
         table_html += f"<tr style='height:{height};'>"
         for c in range(4):
-            table_html += f"<td style='border:1px solid #ccc;width:200px;text-align:center;vertical-align:middle'>{cells[r][c]}</td>"
+            table_html += f"<td style='border:1px solid #ccc;width:120px;text-align:center;vertical-align:middle'>{cells[r][c]}</td>"
         table_html += "</tr>"
     table_html += "</table>"
 
