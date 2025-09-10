@@ -394,8 +394,12 @@ with col_select:
             # 下一批按鈕
             if end < len(group_items):
                 if st.button(f"下一批 {w}", key=f"next_batch_{w}_{instance_id}"):
+                    # 更新顯示索引
                     st.session_state.display_index[f"{w}_{instance_id}"] = start + download_limit
-                    st.session_state[f"auto_select_first_{w}_{instance_id}"] = True  # 自動選第一張
+                    # 自動選第一張
+                    st.session_state[f"auto_select_first_{w}_{instance_id}"] = True
+                    # 重新渲染頁面
+                    st.rerun()
                 else:
                     st.session_state[f"auto_select_first_{w}_{instance_id}"] = False
                     
