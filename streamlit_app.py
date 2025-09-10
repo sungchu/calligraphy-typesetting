@@ -84,6 +84,69 @@ def safe_show_image(img_url, width=120):
     except Exception as e:
         st.write(f"⚠️ 無法顯示圖片：{e}")
 
+# ================= 預覽word內容 =================
+import streamlit as st
+import requests
+from PIL import Image
+from io import BytesIO
+import base64
+
+def image_to_base64(img_url, width=60):
+    """下載圖片並轉成 base64 方便在 HTML table 顯示"""
+    try:
+        if img_url and img_url.startswith("http"):
+            resp = requests.get(img_url, timeout=5)
+            resp.raise_for_status()
+            img = Image.open(BytesIO(resp.content))
+        else:
+            return None
+        # 縮小圖片
+        img.thumbnail((width, width))
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        b64 = base64.b64encode(buffer.getvalue()).decode()
+        return f"data:image/png;base64,{b64}"
+    except Exception:
+        return None
+
+
+def preview_layout(selected_data):
+    """在 Streamlit 畫出和 Word 相同的 4直行×16橫排 排版"""
+    sorted_selected = sorted(selected_data, key=lambda x: x[0])
+
+    # 建立交替資料：word → image → word → image
+    layout_items = []
+    for _, word, author, img_url in sorted_selected:
+        layout_items.append(("word", word))
+        layout_items.append(("image", img_url))
+
+    total_cells = 16 * 4
+    cells = [["" for _ in range(4)] for _ in range(16)]
+
+    for idx, item in enumerate(layout_items[:total_cells]):
+        row = idx % 16
+        col = 3 - (idx // 16)  # 右到左
+        if item[0] == "word":
+            cells[row][col] = f"<div style='font-size:20px;text-align:center'>{item[1]}</div>"
+        else:
+            img_b64 = image_to_base64(item[1], width=60)
+            if img_b64:
+                cells[row][col] = f"<img src='{img_b64}' style='display:block;margin:auto;width:60px;height:auto;'/>"
+            else:
+                cells[row][col] = "<div style='color:red;text-align:center'>[圖片失敗]</div>"
+
+    # 轉成 HTML table
+    table_html = "<table style='border-collapse:collapse;margin:auto;'>"
+    for r in range(16):
+        height = "30px" if (r+1) % 2 == 1 else "90px"  # 模擬 Word 行高
+        table_html += f"<tr style='height:{height};'>"
+        for c in range(4):
+            table_html += f"<td style='border:1px solid #ccc;width:80px;text-align:center;vertical-align:middle'>{cells[r][c]}</td>"
+        table_html += "</tr>"
+    table_html += "</table>"
+
+    st.markdown(table_html, unsafe_allow_html=True)
+
 # ================= 下載word =================
 from docx import Document
 from docx.shared import Cm, Pt
@@ -314,17 +377,8 @@ if results:
 
 # ================= 顯示挑選圖片 =================
 if st.session_state.selected_images:
-    st.subheader("✅ 你挑選的圖片（列水平排列，列內直向堆疊）")
-    sorted_selected = sorted(st.session_state.selected_images, key=lambda x: x[0])
-    max_per_column = st.slider("一行最多顯示幾個字", 1, 10, 3)
-
-    columns_data = [sorted_selected[i:i + max_per_column] for i in range(0, len(sorted_selected), max_per_column)]
-    columns_data = columns_data[::-1]
-    cols = st.columns(len(columns_data))
-    for col, batch in zip(cols, columns_data):
-        with col:
-            for _, word, author, img_url in batch:
-                safe_show_image(img_url, width=60)
+    st.subheader("📖 預覽 Word 排版")
+    preview_layout(st.session_state.selected_images)
 
     buffer = download_word(st.session_state.selected_images)
     st.download_button(
