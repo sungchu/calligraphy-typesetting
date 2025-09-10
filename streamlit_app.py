@@ -43,7 +43,7 @@ st.markdown(
 )
 
 # ================= 輸入欄位 =================
-col_input, col_style, col_calligrapher = st.columns([2.5,0.8,2])
+col_input, col_style, col_dl, col_calligrapher = st.columns([2.2,0.5,0.5,2])
 with col_input:
     search_input = st.text_input("請輸入要搜尋的文字（標點符號將自動忽略，可同時輸入多個字，建議長度不超過30字）")
     search_input_chinese = "".join(re.findall(r"[\u4e00-\u9fff]+", search_input))
@@ -63,7 +63,8 @@ with col_calligrapher:
     else:
         filter_calligrapher_list = None
 
-download_limit = 9
+# download_limit = 6
+download_limit = st.number_input("每個字最多出現幾個選項（輸入整數）"min_value=1, max_value=10, value=5, step=1)
 placeholder_img_path = os.path.join(os.getcwd(), "查無此字.png")  # 同資料夾下
 
 # ================= 安全顯示圖片 =================
