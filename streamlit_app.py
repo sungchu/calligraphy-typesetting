@@ -94,7 +94,7 @@ from PIL import Image
 from io import BytesIO
 import base64
 
-def image_to_base64(img_url, width=60):
+def image_to_base64(img_url, width=120):
     """下載圖片並轉成 base64 方便在 HTML table 顯示"""
     try:
         if img_url and img_url.startswith("http"):
@@ -144,7 +144,7 @@ def preview_layout(selected_data):
         height = "30px" if (r+1) % 2 == 1 else "90px"  # 模擬 Word 行高
         table_html += f"<tr style='height:{height};'>"
         for c in range(4):
-            table_html += f"<td style='border:1px solid #ccc;width:80px;text-align:center;vertical-align:middle'>{cells[r][c]}</td>"
+            table_html += f"<td style='border:1px solid #ccc;width:100px;text-align:center;vertical-align:middle'>{cells[r][c]}</td>"
         table_html += "</tr>"
     table_html += "</table>"
 
@@ -336,7 +336,7 @@ if st.button("開始搜尋"):
             instance_id = word_count[word]
             st.session_state.display_index[f"{word}_{instance_id}"] = 0
 
-col_1, col_select, col_empty, col_show, col4= st.columns([0.2, 0.7, 0.05, 1, 0.2])
+col_1, col_select, col_empty, col_show, col4= st.columns([0.2, 0.9, 0.05, 1, 0.2])
 # ================= 顯示搜尋結果 & 下一批圖片功能 =================
 with col_select:
     results = st.session_state.get("results", [])
