@@ -86,7 +86,7 @@ def safe_show_image(img_url, width=120):
 
 # ================= 下載word =================
 from docx import Document
-from docx.shared import Inches, Pt
+from docx.shared import Cm, Pt
 from io import BytesIO
 import requests
 from PIL import Image
@@ -106,9 +106,9 @@ def download_word(selected_data):
     # 設定行高：單數行高 1、偶數行高 3
     for i, row in enumerate(table.rows):
         if (i+1) % 2 == 1:  # 單數行
-            row.height = Inches(1)
+            row.height = Cm(1)
         else:  # 偶數行
-            row.height = Inches(3)
+            row.height = Cm(3)
 
     # 資料排序（從右上往下）
     sorted_selected = sorted(selected_data, key=lambda x: x[0])
@@ -317,7 +317,7 @@ if st.session_state.selected_images:
         with col:
             for _, word, author, img_url in batch:
                 safe_show_image(img_url, width=60)
-if st.button("下載 Word"):
+
     buffer = download_word(st.session_state.selected_images)
     st.download_button(
         label="📥 下載 Word",
