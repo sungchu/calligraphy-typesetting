@@ -63,7 +63,7 @@ with col_calligrapher:
     else:
         filter_calligrapher_list = None
 
-download_limit = 4
+download_limit = 9
 placeholder_img_path = os.path.join(os.getcwd(), "查無此字.png")  # 同資料夾下
 
 # ================= 安全顯示圖片 =================
