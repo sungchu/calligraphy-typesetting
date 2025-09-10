@@ -140,7 +140,7 @@ def download_word(selected_data):
                 image_stream = BytesIO()
                 image.save(image_stream, format="PNG")
                 image_stream.seek(0)
-                cell.paragraphs[0].add_run().add_picture(image_stream, width=Inches(0.8))
+                cell.paragraphs[0].add_run().add_picture(image_stream, width=Cm(0.8))
             except Exception as e:
                 cell.text = "[圖片載入失敗]"
 
