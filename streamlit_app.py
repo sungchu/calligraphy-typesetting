@@ -17,6 +17,9 @@ from PIL import Image
 import requests
 from io import BytesIO
 
+# 設定頁面寬度
+st.set_page_config(layout="wide")
+
 # ================= 初始化 session_state =================
 if "results" not in st.session_state:
     st.session_state.results = []
